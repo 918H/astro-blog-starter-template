@@ -1,58 +1,61 @@
 ---
 export const prerender = false;
 
-const session = Astro.cookies.get('admin')?.value;
-if (session !== 'yes') {
-	return new Response(JSON.stringify({ error: '未登录' }), {
-		status: 401,
-		headers: { 'Content-Type': 'application/json' }
-	});
-}
-
-if (Astro.request.method !== 'POST') {
-	return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-		status: 405,
-		headers: { 'Content-Type': 'application/json' }
-	});
-}
-
-try {
-	const data = await Astro.request.json();
-	const { title, description, content } = data;
+export async function onRequest({ request, cookies, locals }: any) {
+	if (request.method !== 'POST') {
+		return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+			status: 405,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 	
-	if (!title || !content) {
-		return new Response(JSON.stringify({ error: '标题和内容必填' }), {
-			status: 400,
+	const session = cookies.get('admin')?.value;
+	if (session !== 'yes') {
+		return new Response(JSON.stringify({ error: '未登录' }), {
+			status: 401,
 			headers: { 'Content-Type': 'application/json' }
 		});
 	}
 
-	const kv = (Astro.locals.runtime as any)?.env?.BLOG_STORE;
-	if (!kv) {
-		return new Response(JSON.stringify({ error: 'KV 存储未配置' }), {
+	try {
+		const data = await request.json();
+		const { title, description, content } = data;
+		
+		if (!title || !content) {
+			return new Response(JSON.stringify({ error: '标题和内容必填' }), {
+				status: 400,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		const kv = request.env?.BLOG_STORE;
+		if (!kv) {
+			return new Response(JSON.stringify({ error: 'KV 存储未配置' }), {
+				status: 500,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		}
+
+		const id = Date.now().toString(36);
+		const article = {
+			title,
+			description: description || title.substring(0, 50),
+			content,
+			pubDate: new Date().toISOString(),
+			type: 'blog'
+		};
+		await kv.put('article:' + id, JSON.stringify(article));
+		
+		return new Response(JSON.stringify({ success: true, id }), {
+			status: 201,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	} catch (e: any) {
+		console.error('Create API Error:', e);
+		return new Response(JSON.stringify({ error: e.message }), {
 			status: 500,
 			headers: { 'Content-Type': 'application/json' }
 		});
 	}
-
-	const id = Date.now().toString(36);
-	const article = {
-		title,
-		description: description || title.substring(0, 50),
-		content,
-		pubDate: new Date().toISOString(),
-		type: 'blog'
-	};
-	await kv.put('article:' + id, JSON.stringify(article));
-	
-	return new Response(JSON.stringify({ success: true, id }), {
-		status: 201,
-		headers: { 'Content-Type': 'application/json' }
-	});
-} catch (e: any) {
-	return new Response(JSON.stringify({ error: e.message }), {
-		status: 500,
-		headers: { 'Content-Type': 'application/json' }
-	});
 }
 ---

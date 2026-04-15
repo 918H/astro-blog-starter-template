@@ -1,36 +1,39 @@
 ---
 export const prerender = false;
 
-const { slug } = Astro.params;
-
-if (!slug) {
-	return new Response(JSON.stringify({ error: '文章不存在' }), {
-		status: 404,
-		headers: { 'Content-Type': 'application/json' }
-	});
-}
-
-try {
-	const kv = (Astro.locals.runtime as any)?.env?.BLOG_STORE;
+export async function onRequest({ params, request }: any) {
+	const { slug } = params;
 	
-	if (kv) {
-		const article = await kv.get('article:' + slug, { type: 'json' });
-		if (article) {
-			return new Response(JSON.stringify(article), {
-				status: 200,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
+	if (!slug) {
+		return new Response(JSON.stringify({ error: '文章不存在' }), {
+			status: 404,
+			headers: { 'Content-Type': 'application/json' }
+		});
 	}
-	
-	return new Response(JSON.stringify({ error: '文章不存在' }), {
-		status: 404,
-		headers: { 'Content-Type': 'application/json' }
-	});
-} catch (e: any) {
-	return new Response(JSON.stringify({ error: e.message }), {
-		status: 500,
-		headers: { 'Content-Type': 'application/json' }
-	});
+
+	try {
+		const kv = request.env?.BLOG_STORE;
+		
+		if (kv) {
+			const article = await kv.get('article:' + slug, { type: 'json' });
+			if (article) {
+				return new Response(JSON.stringify(article), {
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				});
+			}
+		}
+		
+		return new Response(JSON.stringify({ error: '文章不存在' }), {
+			status: 404,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	} catch (e: any) {
+		console.error('API Error:', e);
+		return new Response(JSON.stringify({ error: e.message }), {
+			status: 500,
+			headers: { 'Content-Type': 'application/json' }
+		});
+	}
 }
 ---
