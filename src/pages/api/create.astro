@@ -1,85 +1,43 @@
 ---
 export const prerender = false;
 
-export async function onRequest({ request, env, cookies }) {
-	// 验证登录
-	const session = cookies.get('admin')?.value;
-	if (session !== 'yes') {
-		return new Response(JSON.stringify({ error: '未登录' }), {
-			status: 401,
-			headers: { 'Content-Type': 'application/json' }
-		});
-	}
+const session = Astro.cookies.get('admin')?.value;
 
-	// 只处理 POST 请求
-	if (request.method !== 'POST') {
-		return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-			status: 405,
-			headers: { 'Content-Type': 'application/json' }
-		});
-	}
-
+if (Astro.request.method === 'POST' && session === 'yes') {
 	try {
-		// 解析 JSON
-		let data;
-		try {
-			data = await request.json();
-		} catch (e) {
-			return new Response(JSON.stringify({ error: '无效的 JSON 数据' }), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
+		const body = await Astro.request.json();
+		const { title, description, content } = body;
+		
+		if (!title || !content) {
+			return Astro.json({ error: '标题和内容必填' }, 400);
 		}
-
-		const { title, description, content } = data;
-
-		// 验证必填字段
-		if (!title || !title.trim()) {
-			return new Response(JSON.stringify({ error: '标题不能为空' }), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
+		
+		const kv = Astro.locals.runtime?.env?.BLOG_STORE;
+		if (!kv) {
+			return Astro.json({ error: 'KV 存储未配置' }, 500);
 		}
-		if (!content || !content.trim()) {
-			return new Response(JSON.stringify({ error: '内容不能为空' }), {
-				status: 400,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-
-		// 检查 KV 存储
-		if (!env.BLOG_STORE) {
-			console.error('BLOG_STORE KV namespace is not configured');
-			return new Response(JSON.stringify({ error: '服务器配置错误：KV 存储未配置' }), {
-				status: 500,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-
-		// 生成 ID 并保存
+		
 		const id = Date.now().toString(36);
 		const article = {
-			title: title.trim(),
-			description: description?.trim() || title.substring(0, 50),
-			content: content.trim(),
+			title,
+			description: description || title.substring(0, 50),
+			content,
 			pubDate: new Date().toISOString(),
 			type: 'blog'
 		};
-
-		await env.BLOG_STORE.put('article:' + id, JSON.stringify(article));
-		console.log('Article created:', id);
-
-		return new Response(JSON.stringify({ success: true, id }), {
-			status: 201,
-			headers: { 'Content-Type': 'application/json' }
-		});
-
+		
+		await kv.put('article:' + id, JSON.stringify(article));
+		return Astro.json({ success: true, id }, 201);
+		
 	} catch (e) {
-		console.error('Create API Error:', e);
-		return new Response(JSON.stringify({ error: '服务器错误：' + e.message }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
+		console.error('Create Error:', e);
+		return Astro.json({ error: e.message }, 500);
 	}
 }
+
+if (session !== 'yes') {
+	return Astro.json({ error: '未登录' }, 401);
+}
+
+return Astro.json({ error: 'Method not allowed' }, 405);
 ---
