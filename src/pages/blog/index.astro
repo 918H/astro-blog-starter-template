@@ -34,6 +34,25 @@ try {
 	console.error('Failed to load KV posts:', e);
 }
 
+function simpleMarkdownToHtml(md: string) {
+	if (!md) return '';
+	
+	let html = md
+		.replace(/^### (.*$)/gim, '<h3>$1</h3>')
+		.replace(/^## (.*$)/gim, '<h2>$1</h2>')
+		.replace(/^# (.*$)/gim, '<h1>$1</h1>')
+		.replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+		.replace(/\*(.*)\*/gim, '<em>$1</em>')
+		.replace(/^- (.*$)/gim, '<li>$1</li>')
+		.replace(/```(\w*)\n([\s\S]*?)```/gim, '<pre><code class="language-$1">$2</code></pre>')
+		.replace(/`(.*?)`/gim, '<code>$1</code>')
+		.replace(/!\[(.*?)\]\((.*?)\)/gim, '<img src="$2" alt="$1">')
+		.replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+		.replace(/\n/gim, '<br>');
+
+	return html;
+}
+
 const allPosts = [
 	...staticPosts.map(p => ({ 
 		id: p.id, 
@@ -131,8 +150,6 @@ const allPosts = [
 				line-height: 1.8;
 				color: #444;
 				font-size: 1rem;
-				white-space: pre-wrap;
-				word-wrap: break-word;
 			}
 			.feed-content img { 
 				max-width: 100%; 
@@ -269,21 +286,22 @@ const allPosts = [
 							minute: '2-digit'
 						});
 						const hasTitle = post.title && post.title !== post.description;
-						return `
-						<div class="feed-item">
-							<div class="feed-header">
-								<div class="avatar">凳</div>
-								<div class="feed-meta">
-									<div class="feed-author">凳子大王</div>
-									<div class="feed-time">${timeLabel}</div>
+						return (
+							<div class="feed-item">
+								<div class="feed-header">
+									<div class="avatar">凳</div>
+									<div class="feed-meta">
+										<div class="feed-author">凳子大王</div>
+										<div class="feed-time">{timeLabel}</div>
+									</div>
+								</div>
+								{hasTitle ? <h3 class="feed-title">{post.title}</h3> : null}
+								<div class="feed-content" set:html={simpleMarkdownToHtml(post.content || '')} />
+								<div class="feed-actions">
+									<a href={`/blog/${post.id}`} target="_blank">阅读全文 →</a>
 								</div>
 							</div>
-							${hasTitle ? `<h3 class="feed-title">${post.title}</h3>` : ''}
-							<div class="feed-content">${post.content || ''}</div>
-							<div class="feed-actions">
-								<a href="/blog/${post.id}" target="_blank">阅读全文 →</a>
-							</div>
-						</div>`;
+						);
 					})
 				)}
 			</div>
