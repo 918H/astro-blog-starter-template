@@ -7,9 +7,5 @@ export default defineConfig({
 	site: "https://astro-blog-starter-template.3495476324.workers.dev",
 	integrations: [mdx(), sitemap()],
 	output: 'server',
-	adapter: cloudflare({
-		platformProxy: {
-			enabled: true,
-		},
-	}),
+	adapter: cloudflare(),
 });

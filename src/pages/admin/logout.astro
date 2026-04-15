@@ -1,11 +1,18 @@
 ---
 export const prerender = false;
 
-// 清除登录 cookie
-Astro.cookies.set('admin_session', '', {
+Astro.cookies.set('admin', '', {
+	path: '/',
 	maxAge: 0,
-	path: '/'
+	httpOnly: true,
+	sameSite: 'lax'
 });
 
-return Astro.redirect('/blog');
+return new Response(null, {
+	status: 302,
+	headers: {
+		'Location': '/admin/login',
+		'Cache-Control': 'no-cache'
+	}
+});
 ---

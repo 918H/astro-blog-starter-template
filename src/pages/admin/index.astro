@@ -1,0 +1,151 @@
+---
+export const prerender = false;
+
+const session = Astro.cookies.get('admin')?.value;
+if (session !== 'yes') {
+	return Astro.redirect('/admin/login');
+}
+
+let articles = [];
+try {
+	const kv = (Astro.locals.runtime as any)?.env?.BLOG_STORE;
+	if (kv) {
+		const keys = await kv.list();
+		for (const key of (keys as any).keys || []) {
+			if (key.name.startsWith('article:')) {
+				const article = await kv.get(key.name, { type: 'json' });
+				if (article) {
+					articles.push({
+						id: key.name.replace('article:', ''),
+						...article
+					});
+				}
+			}
+		}
+	}
+	articles.sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+} catch (e) {
+	console.error('Failed to load articles:', e);
+}
+---
+
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<title>文章管理</title>
+		<style>
+			body {
+				font-family: system-ui, sans-serif;
+				background: #f5f5f5;
+				margin: 0;
+			}
+			.header {
+				background: #4e7dff;
+				color: white;
+				padding: 1rem 2rem;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.header h1 { margin: 0; font-size: 1.5rem; }
+			.header a {
+				color: white;
+				text-decoration: none;
+				background: rgba(255,255,255,0.2);
+				padding: 0.5rem 1rem;
+				border-radius: 4px;
+				margin-left: 0.5rem;
+			}
+			.container {
+				max-width: 900px;
+				margin: 2rem auto;
+				padding: 0 1rem;
+			}
+			.article-list {
+				background: white;
+				border-radius: 12px;
+				overflow: hidden;
+			}
+			.article-item {
+				padding: 1.5rem;
+				border-bottom: 1px solid #eee;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.article-item:last-child { border-bottom: none; }
+			.article-info h3 { margin: 0 0 0.5rem; color: #333; }
+			.article-info p { margin: 0; color: #666; font-size: 0.9rem; }
+			.article-time { color: #999; font-size: 0.85rem; }
+			.actions { display: flex; gap: 0.5rem; }
+			.btn {
+				padding: 0.5rem 1rem;
+				border-radius: 6px;
+				text-decoration: none;
+				font-size: 0.9rem;
+				cursor: pointer;
+				border: none;
+			}
+			.btn-view { background: #e8f4ff; color: #4e7dff; }
+			.btn-edit { background: #fff3cd; color: #856404; }
+			.btn-delete { background: #fee; color: #c00; }
+			.empty { text-align: center; padding: 4rem; color: #999; }
+		</style>
+	</head>
+	<body>
+		<div class="header">
+			<h1>📋 文章管理</h1>
+			<div>
+				<a href="/">首页</a>
+				<a href="/admin/new">写文章</a>
+				<a href="/admin/logout">退出</a>
+			</div>
+		</div>
+
+		<div class="container">
+			<div class="article-list">
+				{articles.length === 0 ? (
+					<div class="empty">
+						<h2>暂无文章</h2>
+						<p>点击"写文章"创建第一篇</p>
+					</div>
+				) : (
+					articles.map(article => (
+						<div class="article-item">
+							<div class="article-info">
+								<h3>{article.title}</h3>
+								<p>{article.description}</p>
+								<p class="article-time">{new Date(article.pubDate).toLocaleString('zh-CN')}</p>
+							</div>
+							<div class="actions">
+								<a href={"/blog/" + article.id} class="btn btn-view" target="_blank">查看</a>
+								<button class="btn btn-delete" onclick="del('{article.id}')">删除</button>
+							</div>
+						</div>
+					))
+				)}
+			</div>
+		</div>
+
+		<script>
+			async function del(id) {
+				if (!confirm('确定删除？')) return;
+				try {
+					const res = await fetch('/api/delete', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ id })
+					});
+					if (res.ok) {
+						location.reload();
+					} else {
+						alert('删除失败');
+					}
+				} catch (e) {
+					alert('删除失败：' + e.message);
+				}
+			}
+		</script>
+	</body>
+</html>
