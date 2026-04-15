@@ -1,47 +1,127 @@
 ---
 export const prerender = false;
 
-const session = Astro.cookies.get('admin_session')?.value;
-if (session !== 'authenticated') {
-	return Astro.redirect('/admin/login');
+// 检查是否已登录（通过 cookie）
+const session = Astro.cookies.get('shuoshuo_admin')?.value;
+const isLoggedIn = session === 'true';
+
+// 处理登录请求
+if (Astro.request.method === 'POST' && !isLoggedIn) {
+	const formData = await Astro.request.formData();
+	const code = formData.get('code');
+	
+	// 简单验证码，改成你自己的
+	if (code === 'dzdwnb666') {
+		Astro.cookies.set('shuoshuo_admin', 'true', {
+			httpOnly: true,
+			maxAge: 60 * 60 * 24 * 30, // 30 天
+			path: '/'
+		});
+		return Astro.redirect('/admin/new');
+	} else {
+		Astro.cookies.set('shuoshuo_admin', 'false', {
+			maxAge: 60 * 60 * 24 * 30,
+			path: '/'
+		});
+	}
 }
 
-// 处理 POST 请求 - 创建说说
-if (Astro.request.method === 'POST') {
-	const data = await Astro.request.json();
-	const { content } = data;
-	
-	if (!content || content.trim().length === 0) {
-		return new Response(JSON.stringify({ error: '内容不能为空' }), {
-			status: 400,
-			headers: { 'Content-Type': 'application/json' }
-		});
-	}
-
-	try {
-		const kv = (Astro.locals.runtime as any)?.env?.BLOG_STORE;
-		if (kv) {
-			const id = Date.now().toString(36);
-			const article = {
-				title: '说说 #' + id,
-				description: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
-				content: content,
-				pubDate: new Date().toISOString(),
-				updatedDate: new Date().toISOString(),
-				type: 'shuoshuo'
-			};
-			await kv.put('article:' + id, JSON.stringify(article));
-			return new Response(JSON.stringify({ success: true, id }), {
-				status: 201,
-				headers: { 'Content-Type': 'application/json' }
-			});
-		}
-	} catch (e: any) {
-		return new Response(JSON.stringify({ error: e.message }), {
-			status: 500,
-			headers: { 'Content-Type': 'application/json' }
-		});
-	}
+// 如果没有登录，显示登录页面
+if (!isLoggedIn) {
+	return `<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>登录</title>
+		<style>
+			* { box-sizing: border-box; }
+			body {
+				font-family: -apple-system, sans-serif;
+				background: #f0f2f5;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 100vh;
+				margin: 0;
+			}
+			.card {
+				background: white;
+				padding: 2rem;
+				border-radius: 12px;
+				box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+				width: 100%;
+				max-width: 360px;
+			}
+			h1 {
+				margin: 0 0 1.5rem 0;
+				font-size: 1.5rem;
+				text-align: center;
+				color: #333;
+			}
+			.form-group { margin-bottom: 1rem; }
+			label {
+				display: block;
+				margin-bottom: 0.5rem;
+				color: #666;
+			}
+			input[type="text"],
+			input[type="password"] {
+				width: 100%;
+				padding: 0.75rem;
+				border: 1px solid #ddd;
+				border-radius: 8px;
+				font-size: 1rem;
+			}
+			input:focus {
+				outline: none;
+				border-color: #4e7dff;
+			}
+			button {
+				width: 100%;
+				padding: 0.75rem;
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				color: white;
+				border: none;
+				border-radius: 8px;
+				font-size: 1rem;
+				font-weight: 600;
+				cursor: pointer;
+			}
+			button:hover { opacity: 0.9; }
+			.hint {
+				margin-top: 1rem;
+				padding: 0.75rem;
+				background: #fff3cd;
+				border-radius: 6px;
+				font-size: 0.85rem;
+				color: #856404;
+			}
+			.error {
+				background: #f8d7da;
+				color: #721c24;
+				padding: 0.75rem;
+				border-radius: 6px;
+				margin-bottom: 1rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="card">
+			<h1>🔐 管理登录</h1>
+			<form method="post">
+				<div class="form-group">
+					<label>验证码</label>
+					<input type="password" name="code" required autofocus />
+				</div>
+				<button type="submit">登录</button>
+			</form>
+			<div class="hint">
+				💡 提示：验证码是 6 位数字和字母组合
+			</div>
+		</div>
+	</body>
+</html>`;
 }
 ---
 
@@ -54,18 +134,17 @@ if (Astro.request.method === 'POST') {
 		<style>
 			* { box-sizing: border-box; }
 			body {
-				font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+				font-family: -apple-system, sans-serif;
 				background: #f0f2f5;
 				margin: 0;
 			}
 			.header {
-				background: #4e7dff;
+				background: linear-gradient(135deg, #667eea, #764ba2);
 				color: white;
 				padding: 1rem 2rem;
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
-				box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 			}
 			.header h1 { margin: 0; font-size: 1.5rem; }
 			.header a {
@@ -74,30 +153,25 @@ if (Astro.request.method === 'POST') {
 				background: rgba(255,255,255,0.2);
 				padding: 0.5rem 1rem;
 				border-radius: 4px;
-				margin-left: 0.5rem;
 			}
 			.container {
 				max-width: 600px;
 				margin: 2rem auto;
 				padding: 0 1rem;
 			}
-			.post-card {
+			.card {
 				background: white;
 				border-radius: 12px;
-				box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+				box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 				overflow: hidden;
 			}
-			.post-header {
-				padding: 1rem 1.5rem;
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			.card-header {
+				padding: 1.5rem;
+				background: linear-gradient(135deg, #667eea, #764ba2);
 				color: white;
 			}
-			.post-header h2 {
-				margin: 0;
-				font-size: 1.2rem;
-				font-weight: 600;
-			}
-			.post-input {
+			.card-header h2 { margin: 0; font-size: 1.2rem; }
+			textarea {
 				width: 100%;
 				min-height: 200px;
 				padding: 1.5rem;
@@ -107,11 +181,11 @@ if (Astro.request.method === 'POST') {
 				font-size: 1rem;
 				line-height: 1.6;
 			}
-			.post-input:focus {
+			textarea:focus {
 				outline: none;
 				background: #fafafa;
 			}
-			.post-footer {
+			.footer {
 				padding: 1rem 1.5rem;
 				background: #fafafa;
 				border-top: 1px solid #eee;
@@ -119,63 +193,47 @@ if (Astro.request.method === 'POST') {
 				justify-content: space-between;
 				align-items: center;
 			}
-			.char-count {
-				color: #999;
-				font-size: 0.9rem;
-			}
+			.count { color: #999; font-size: 0.9rem; }
 			.btn {
 				padding: 0.75rem 2rem;
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				color: white;
+				border: none;
 				border-radius: 25px;
 				font-size: 1rem;
-				cursor: pointer;
-				border: none;
 				font-weight: 600;
-				transition: all 0.3s;
+				cursor: pointer;
 			}
-			.btn-primary {
-				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-				color: white;
-			}
-			.btn-primary:hover {
-				transform: scale(1.05);
-				box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-			}
-			.btn-primary:disabled {
+			.btn:hover { opacity: 0.9; }
+			.btn:disabled {
 				background: #ccc;
 				cursor: not-allowed;
-				transform: none;
-				box-shadow: none;
 			}
 			.message {
 				padding: 1rem 1.5rem;
 				display: none;
-				font-size: 0.9rem;
 			}
 			.message.success {
 				background: #d4edda;
 				color: #155724;
 				display: block;
-				border-bottom: 1px solid #c3e6cb;
 			}
 			.message.error {
 				background: #f8d7da;
 				color: #721c24;
 				display: block;
-				border-bottom: 1px solid #f5c6cb;
 			}
 		</style>
 	</head>
 	<body>
 		<div class="header">
 			<h1>✨ 发说说</h1>
-			<div>
-				<a href="/blog">首页</a>
-			</div>
+			<a href="/blog">返回首页</a>
 		</div>
 
 		<div class="container">
-			<div class="post-card">
-				<div class="post-header">
+			<div class="card">
+				<div class="card-header">
 					<h2>此刻在想什么？</h2>
 				</div>
 				
@@ -183,16 +241,13 @@ if (Astro.request.method === 'POST') {
 				
 				<textarea 
 					id="content" 
-					class="post-input" 
-					placeholder="说点什么吧...
-					
-想说的、记录的、分享的，都可以在这里～"
+					placeholder="说点什么吧...&#10;&#10;记录生活，分享想法，都很棒！"
 					maxlength="10000"
 				></textarea>
 				
-				<div class="post-footer">
-					<span class="char-count"><span id="charCount">0</span> / 10000</span>
-					<button type="button" id="publishBtn" class="btn btn-primary">发布</button>
+				<div class="footer">
+					<span class="count"><span id="charCount">0</span> / 10000</span>
+					<button type="button" id="publishBtn" class="btn">发布</button>
 				</div>
 			</div>
 		</div>
