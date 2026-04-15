@@ -16,5 +16,12 @@
 			"binding": "BLOG_STORE",
 			"id": "f5f794efdb714a6c9a9ba489ac08fb8e"
 		}
+	],
+	"rules": [
+		{
+			"type": "ESModule",
+			"globs": ["**/*.js"],
+			"fallthrough": true
+		}
 	]
 }
