@@ -4,7 +4,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 // TODO: 修改为你的管理员密码
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_PASSWORD = 'dzdwnb666';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
 	try {
