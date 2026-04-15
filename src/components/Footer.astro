@@ -3,14 +3,59 @@ const today = new Date();
 ---
 
 <footer>
-	&copy; {today.getFullYear()} 凳子大王 · 一切都有无限可能
+	<div class="footer-content">
+		<div class="footer-main">
+			<span class="footer-icon">🪑</span>
+			<span class="footer-text">凳子大王 · 一切都有无限可能</span>
+		</div>
+		<div class="footer-meta">
+			<span>&copy; {today.getFullYear()}</span>
+			<span class="separator">·</span>
+			<span>Powered by Astro & Cloudflare</span>
+		</div>
+	</div>
 </footer>
+
 <style>
 	footer {
-		padding: 2em 1em;
+		padding: 3em 1em 2em;
 		text-align: center;
 		color: #666;
-		border-top: 1px solid #eee;
+		border-top: 1px solid rgba(0,0,0,0.05);
 		margin-top: 4em;
+		background: rgba(255,255,255,0.5);
+	}
+	.footer-content {
+		max-width: 720px;
+		margin: 0 auto;
+	}
+	.footer-main {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		margin-bottom: 0.75rem;
+		font-size: 1rem;
+		color: #444;
+	}
+	.footer-icon {
+		font-size: 1.3rem;
+	}
+	.footer-meta {
+		font-size: 0.85rem;
+		color: #999;
+	}
+	.separator {
+		margin: 0 0.5rem;
+	}
+	@media (max-width: 720px) {
+		footer {
+			padding: 2em 1em 1.5em;
+		}
+		.footer-main {
+			font-size: 0.95rem;
+			flex-direction: column;
+			gap: 0.25rem;
+		}
 	}
 </style>

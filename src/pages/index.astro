@@ -9,32 +9,156 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 <html lang="zh-CN">
 	<head>
 		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<style>
+			.hero {
+				text-align: center;
+				padding: 4rem 2rem 3rem;
+				max-width: 650px;
+				margin: 0 auto;
+			}
+			.hero-avatar {
+				width: 120px;
+				height: 120px;
+				border-radius: 50%;
+				background: linear-gradient(135deg, #ff6b35, #ff9f43);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 3.5rem;
+				color: white;
+				font-weight: 700;
+				margin: 0 auto 2rem;
+				box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
+			}
+			.hero h1 {
+				font-size: 2.2rem;
+				color: #333;
+				margin-bottom: 0.75rem;
+				font-weight: 700;
+			}
+			.subtitle {
+				font-size: 1.1rem;
+				color: #ff6b35;
+				margin-bottom: 2rem;
+				font-weight: 500;
+			}
+			.intro {
+				font-size: 1.05rem;
+				line-height: 1.8;
+				color: #555;
+				text-align: left;
+				background: white;
+				padding: 2rem;
+				border-radius: 16px;
+				box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+				margin-top: 2rem;
+			}
+			.intro p {
+				margin-bottom: 1.5rem;
+			}
+			.intro p:last-child {
+				margin-bottom: 0;
+			}
+			.highlight {
+				background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(255, 159, 67, 0.1));
+				padding: 1.5rem;
+				border-radius: 12px;
+				border-left: 4px solid #ff6b35;
+				margin: 2rem 0;
+			}
+			.highlight p {
+				margin: 0;
+				font-style: italic;
+				color: #666;
+			}
+			.cta {
+				margin-top: 2.5rem;
+				display: flex;
+				gap: 1rem;
+				justify-content: center;
+				flex-wrap: wrap;
+			}
+			.cta-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.9rem 2rem;
+				border-radius: 12px;
+				text-decoration: none;
+				font-weight: 600;
+				font-size: 1rem;
+				transition: all 0.3s;
+			}
+			.cta-btn-primary {
+				background: linear-gradient(135deg, #ff6b35, #ff9f43);
+				color: white;
+				box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+			}
+			.cta-btn-primary:hover {
+				box-shadow: 0 6px 16px rgba(255, 107, 53, 0.4);
+				transform: translateY(-2px);
+			}
+			.cta-btn-secondary {
+				background: #f8f9fa;
+				color: #333;
+				border: 2px solid #e9ecef;
+			}
+			.cta-btn-secondary:hover {
+				background: #e9ecef;
+				transform: translateY(-1px);
+			}
+			
+			@media (max-width: 720px) {
+				.hero {
+					padding: 3rem 1rem 2rem;
+				}
+				.hero-avatar {
+					width: 100px;
+					height: 100px;
+					font-size: 2.8rem;
+				}
+				.hero h1 {
+					font-size: 1.8rem;
+				}
+				.intro {
+					padding: 1.5rem;
+				}
+			}
+		</style>
 	</head>
 	<body>
 		<Header />
 		<main>
-			<h1>👋 我是凳子大王</h1>
-			<p class="subtitle">一切都有无限可能</p>
-			<p>
-				不是什么技术大牛，就是个爱折腾的普通开发者。平时写写代码，踩踩坑，然后把踩坑的过程记下来。
-			</p>
-			<p>
-				这里没有高深莫测的理论，只有实打实的实战经验。可能是某个框架的入门指南，也可能是某个 Bug 的解决过程，还可能是一些奇奇怪怪的技术探索。
-			</p>
-			<p>
-				代码能跑就行，文章能看懂就好。
-			</p>
-			<p style="margin-top: 2em; font-size: 0.9em; color: #666;">
-				📍 最近在看什么：↓ 下面的文章列表
-			</p>
+			<div class="hero">
+				<div class="hero-avatar">凳</div>
+				<h1>👋 我是凳子大王</h1>
+				<p class="subtitle">一切都有无限可能</p>
+			</div>
+			
+			<div class="intro">
+				<p>
+					不是什么技术大牛，就是个爱折腾的普通开发者。平时写写代码，踩踩坑，然后把踩坑的过程记下来。
+				</p>
+				<p>
+					这里没有高深莫测的理论，只有实打实的实战经验。可能是某个框架的入门指南，也可能是某个 Bug 的解决过程，还可能是一些奇奇怪怪的技术探索。
+				</p>
+				<div class="highlight">
+					<p>代码能跑就行，文章能看懂就好。</p>
+				</div>
+				<p>
+					📍 随便看看 ↓
+				</p>
+			</div>
+			
+			<div class="cta">
+				<a href="/blog" class="cta-btn cta-btn-primary">
+					📝 看看文章
+				</a>
+				<a href="/about" class="cta-btn cta-btn-secondary">
+					🙋 关于我
+				</a>
+			</div>
 		</main>
 		<Footer />
 	</body>
 </html>
-<style>
-	.subtitle {
-		font-size: 1.2em;
-		color: #666;
-		margin-top: -0.5em;
-	}
-</style>
