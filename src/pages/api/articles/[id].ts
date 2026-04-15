@@ -1,9 +1,10 @@
----
 // API: 获取单篇文章详情
+import type { APIRoute } from 'astro';
+
 export const prerender = false;
 
-export async function GET({ params, locals }) {
-	const kv = locals.runtime.env.BLOG_STORE;
+export const GET: APIRoute = async ({ params, locals }) => {
+	const kv = (locals as any).runtime?.env?.BLOG_STORE;
 	
 	if (!kv) {
 		return new Response(JSON.stringify({ error: '存储未配置' }), {
@@ -28,12 +29,10 @@ export async function GET({ params, locals }) {
 			status: 200,
 			headers: { 'Content-Type': 'application/json' }
 		});
-	} catch (err) {
+	} catch (err: any) {
 		return new Response(JSON.stringify({ error: err.message }), {
 			status: 500,
 			headers: { 'Content-Type': 'application/json' }
 		});
 	}
-}
-
----
+};
