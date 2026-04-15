@@ -8,6 +8,15 @@ import { getCollection } from 'astro:content';
 export const prerender = false;
 
 const staticPosts = await getCollection('blog');
+const staticPostsData = staticPosts.map(post => ({
+	id: post.id,
+	data: {
+		title: post.data.title,
+		description: post.data.description,
+		pubDate: post.data.pubDate.toISOString(),
+		heroImage: post.data.heroImage || ''
+	}
+}));
 ---
 
 <!doctype html>
@@ -101,22 +110,15 @@ const staticPosts = await getCollection('blog');
 		<Footer />
 
 		<script>
+			const STATIC_POSTS = {staticPostsDataJSON};
+
 			async function loadPosts() {
 				try {
-					const [staticRes, kvRes] = await Promise.all([
-						fetch('/static-posts.json'),
-						fetch('/api/articles')
-					]);
-
-					const staticPosts = await staticRes.json().catch(() => []);
+					const kvRes = await fetch('/api/articles');
 					const kvPosts = await kvRes.json().catch(() => []);
 
 					const allPosts = [
-						...staticPosts.map(p => ({
-							id: p.id,
-							data: p.data,
-							isStatic: true
-						})),
+						...STATIC_POSTS,
 						...kvPosts.map(p => ({
 							id: p.id,
 							data: {
@@ -124,8 +126,7 @@ const staticPosts = await getCollection('blog');
 								description: p.description,
 								pubDate: new Date(p.pubDate).toISOString(),
 								heroImage: p.heroImage
-							},
-							isKV: true
+							}
 						}))
 					].sort((a, b) => new Date(b.data.pubDate).getTime() - new Date(a.data.pubDate).getTime());
 
@@ -137,38 +138,27 @@ const staticPosts = await getCollection('blog');
 					}
 
 					let html = '';
-					allPosts.forEach((post, index) => {
+					allPosts.forEach((post) => {
 						const date = new Date(post.data.pubDate).toLocaleDateString('zh-CN', {
 							year: 'numeric',
 							month: 'long',
 							day: 'numeric'
 						});
 						
-						if (index === 0) {
-							html += `
-								<li>
-									<a href="/blog/${post.id}/">
-										<img width="720" height="360" src="${post.data.heroImage || '/blog-placeholder-1.jpg'}" alt="" />
-										<h4 class="title">${escapeHtml(post.data.title)}</h4>
-										<p class="date">${date}</p>
-									</a>
-								</li>
-							`;
-						} else {
-							html += `
-								<li>
-									<a href="/blog/${post.id}/">
-										<img width="720" height="360" src="${post.data.heroImage || '/blog-placeholder-1.jpg'}" alt="" />
-										<h4 class="title">${escapeHtml(post.data.title)}</h4>
-										<p class="date">${date}</p>
-									</a>
-								</li>
-							`;
-						}
+						html += `
+							<li>
+								<a href="/blog/${post.id}/">
+									<img width="720" height="360" src="${post.data.heroImage || '/blog-placeholder-1.jpg'}" alt="" />
+									<h4 class="title">${escapeHtml(post.data.title)}</h4>
+									<p class="date">${date}</p>
+								</a>
+							</li>
+						`;
 					});
 
 					container.innerHTML = html;
 				} catch (err) {
+					console.error(err);
 					document.getElementById('posts').innerHTML = '<li class="empty">加载失败</li>';
 				}
 			}
